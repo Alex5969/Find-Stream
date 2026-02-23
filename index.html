@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Stream</title>
+    
+    <style>
+        body {
+            margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #000000; color: #ffffff;
+        }
+        
+        header {
+            display: flex; align-items: center; justify-content: center;
+            padding: 15px; border-bottom: 1px solid #333; position: relative;
+        }
+        .menu-btn {
+            position: absolute; left: 15px; background: none; border: none;
+            color: white; font-size: 24px; cursor: pointer;
+        }
+        
+        .container { padding: 20px; max-width: 600px; margin: 0 auto; }
+        
+        /* Menu Burger Overlay */
+        #burger-menu {
+            display: none; position: fixed; top: 0; left: 0; width: 250px; height: 100%;
+            background-color: #121212; border-right: 1px solid #333; padding: 20px; z-index: 100;
+        }
+        #burger-menu.active { display: block; }
+        .close-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; float: right; }
+        
+        /* Formulaire */
+        .form-group { margin-top: 15px; }
+        .form-group input, .form-group select, .form-group button {
+            width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box;
+            background-color: #1e1e1e; border: 1px solid #333; color: white; border-radius: 5px;
+        }
+        .form-group button { background-color: #2eeb7b; color: black; font-weight: bold; cursor: pointer; border: none; }
+        
+        /* Grille des sites */
+        .category-title { font-size: 20px; font-weight: bold; margin-top: 25px; margin-bottom: 10px; border-bottom: 1px solid #222; padding-bottom: 5px; }
+        .site-card {
+            display: flex; align-items: center; padding: 15px 0; border-bottom: 1px solid #1a1a1a;
+            text-decoration: none; color: white; transition: background 0.2s;
+        }
+        .site-card:hover { background-color: #0a0a0a; }
+        .site-icon {
+            width: 45px; height: 45px; background-color: #1e1e1e; border-radius: 8px; margin-right: 15px;
+        }
+        .site-info { flex-grow: 1; }
+        .site-name { font-size: 16px; font-weight: bold; }
+        .site-sub { font-size: 13px; color: #888; display: flex; align-items: center; margin-top: 5px; }
+        
+        /* Pastilles dynamiques CSS */
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+        .dot-green { background-color: #2eeb7b; box-shadow: 0 0 8px rgba(46, 235, 123, 0.4); }
+        .dot-red { background-color: #ff3b30; box-shadow: 0 0 8px rgba(255, 59, 48, 0.4); }
+        .dot-orange { background-color: #ff9500; box-shadow: 0 0 8px rgba(255, 149, 0, 0.4); }
+        
+        .chevron { color: #555; font-size: 20px; }
+    </style>
+</head>
+<body>
+
+    <div id="burger-menu">
+        <button class="close-btn" onclick="toggleMenu()">✕</button>
+        <h3>Proposer un site</h3>
+        <form id="propose-form" onsubmit="soumettreSite(event)">
+            <div class="form-group"><input type="text" id="site-nom" placeholder="Nom du site" required></div>
+            <div class="form-group">
+                <select id="site-cat">
+                    <option value="Films">Films</option>
+                    <option value="Animes">Animes</option>
+                    <option value="Général">Général</option>
+                </select>
+            </div>
+            <div class="form-group"><input type="url" id="site-url" placeholder="https://..." required></div>
+            <div class="form-group"><button type="submit" id="submit-btn">Envoyer</button></div>
+            <p id="form-message" style="font-size: 13px; margin-top: 10px; font-weight: bold;"></p>
+        </form>
+    </div>
+
+    <header>
+        <button class="menu-btn" onclick="toggleMenu()">☰</button>
+        <h2 style="margin: 0; font-size: 18px;">Find Stream</h2>
+    </header>
+
+    <div class="container" id="content">
+        <p style="text-align: center; color: #888; margin-top: 50px;">Connexion à la base de données...</p>
+    </div>
+
+    <script>
+        // REMPLACE CETTE URL PAR LA TIENNE
+        const API_URL = "https://script.google.com/macros/s/AKfycbzrY64QnGdNjv0t1LW7ZBubtlf3L8AcgdZEX-RWvlbHTQsYHu30JEcRTCuRo7lOrw0kMA/exec";
+
+        function toggleMenu() {
+            document.getElementById('burger-menu').classList.toggle('active');
+        }
+
+        // LECTURE DE LA BASE DE DONNÉES
+        async function chargerDonnees() {
+            try {
+                const response = await fetch(API_URL);
+                const json = await response.json();
+                
+                if (json.succes && json.donnees.length > 0) {
+                    afficherSites(json.donnees);
+                } else {
+                    document.getElementById('content').innerHTML = "<p style='text-align:center;'>Aucun site trouvé.</p>";
+                }
+            } catch (erreur) {
+                document.getElementById('content').innerHTML = "<p style='text-align:center; color:#ff3b30;'>Erreur de connexion à l'API.</p>";
+            }
+        }
+
+        // RENDU HTML DES CARTES
+        function afficherSites(donnees) {
+            const container = document.getElementById('content');
+            container.innerHTML = ""; 
+
+            const categories = { "Films": [], "Général": [], "Animes": [] };
+            donnees.forEach(site => {
+                if (categories[site.categorie]) categories[site.categorie].push(site);
+                else categories["Général"].push(site); 
+            });
+
+            for (const [cat, sites] of Object.entries(categories)) {
+                if (sites.length === 0) continue;
+
+                let html = `<div class="category-title">${cat}</div>`;
+                sites.forEach(site => {
+                    let dotClass = "dot-orange"; 
+                    if (site.statut.includes("🟢") || site.statut.includes("🔄") || site.statut.includes("🔍")) {
+                        dotClass = "dot-green";
+                    } else if (site.statut.includes("🔴")) {
+                        dotClass = "dot-red";
+                    }
+                    
+                    let statutPropre = site.statut.replace(/[🟢🔴🔄🔍]/g, "").trim();
+
+                    html += `
+                        <a href="${site.url}" target="_blank" class="site-card">
+                            <div class="site-icon"></div>
+                            <div class="site-info">
+                                <div class="site-name">${site.nom}</div>
+                                <div class="site-sub">
+                                    <span class="status-dot ${dotClass}"></span> ${statutPropre}
+                                </div>
+                            </div>
+                            <div class="chevron">›</div>
+                        </a>
+                    `;
+                });
+                container.innerHTML += html; 
+            }
+        }
+
+        // ÉCRITURE : ENVOI DU FORMULAIRE
+        async function soumettreSite(event) {
+            event.preventDefault(); 
+            const btn = document.getElementById('submit-btn');
+            const msg = document.getElementById('form-message');
+            btn.innerText = "Envoi...";
+            btn.disabled = true;
+
+            const params = new URLSearchParams();
+            params.append("source", "formulaire_web");
+            params.append("nom", document.getElementById('site-nom').value);
+            params.append("categorie", document.getElementById('site-cat').value);
+            params.append("url", document.getElementById('site-url').value);
+
+            try {
+                const response = await fetch(API_URL, { method: 'POST', body: params });
+                const result = await response.json();
+                
+                msg.style.color = result.statut === "succes" ? "#2eeb7b" : "#ff3b30";
+                msg.innerText = result.message;
+                
+                if (result.statut === "succes") {
+                    document.getElementById('propose-form').reset();
+                    setTimeout(() => { toggleMenu(); msg.innerText = ""; }, 2000);
+                }
+            } catch (erreur) {
+                msg.style.color = "#ff3b30";
+                msg.innerText = "Erreur réseau. Impossible de contacter le serveur.";
+            } finally {
+                btn.innerText = "Envoyer";
+                btn.disabled = false;
+            }
+        }
+
+        // INITIALISATION
+        chargerDonnees();
+    </script>
+</body>
+</html>
