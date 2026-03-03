@@ -3,187 +3,204 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Find Stream</title>
+    <title>Find Stream - Live Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* === DESIGN GÉNÉRAL === */
-        body { 
-            margin: 0; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            background-color: #000000; 
-            color: #ffffff; 
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
         }
         
-        header { 
-            display: flex; align-items: center; justify-content: center; 
-            padding: 15px; border-bottom: 1px solid #333; position: relative; 
+        /* Couleurs de statuts simples (Sans effet Glow) */
+        .status-online {
+            background-color: #22c55e; /* Vert plat */
         }
-        
-        .menu-btn { 
-            position: absolute; left: 15px; background: none; border: none; 
-            color: white; font-size: 24px; cursor: pointer; 
+        .status-offline {
+            background-color: #ef4444; /* Rouge plat */
         }
-        
-        .container { 
-            padding: 20px; max-width: 600px; margin: 0 auto; 
+        .status-pending {
+            background-color: #f97316; /* Orange plat */
         }
 
-        /* === MENU BURGER (FORMULAIRE) === */
-        #burger-menu { 
-            display: none; position: fixed; top: 0; left: 0; width: 250px; height: 100%; 
-            background-color: #121212; border-right: 1px solid #333; padding: 20px; z-index: 100; 
+        /* Masquer la scrollbar pour le style mobile */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
         }
-        
-        #burger-menu.active { display: block; }
-        
-        .close-btn { 
-            background: none; border: none; color: white; font-size: 20px; cursor: pointer; float: right; 
-        }
-        
-        .form-group { margin-top: 15px; }
-        
-        .form-group input, .form-group select, .form-group button { 
-            width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box; 
-            background-color: #1e1e1e; border: 1px solid #333; color: white; border-radius: 5px; 
-        }
-        
-        .form-group button { 
-            background-color: #2eeb7b; color: black; font-weight: bold; cursor: pointer; border: none; 
-        }
-
-        /* === CARTES DES SITES === */
-        .category-title { 
-            font-size: 20px; font-weight: bold; margin-top: 25px; margin-bottom: 10px; 
-            border-bottom: 1px solid #222; padding-bottom: 5px; 
-        }
-        
-        .site-card { 
-            display: flex; align-items: center; padding: 15px 0; border-bottom: 1px solid #1a1a1a; 
-            text-decoration: none; color: white; transition: background 0.2s; 
-        }
-        
-        .site-card:hover { background-color: #0a0a0a; }
-        
-        .site-icon { 
-            width: 45px; height: 45px; background-color: #1e1e1e; border-radius: 8px; margin-right: 15px; 
-        }
-        
-        .site-info { flex-grow: 1; }
-        
-        .site-name { font-size: 16px; font-weight: bold; }
-        
-        .site-sub { font-size: 13px; color: #888; display: flex; align-items: center; margin-top: 5px; }
-
-        /* === PASTILLES DE STATUT === */
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
-        .dot-green { background-color: #2eeb7b; box-shadow: 0 0 8px rgba(46, 235, 123, 0.4); }
-        .dot-red { background-color: #ff3b30; box-shadow: 0 0 8px rgba(255, 59, 48, 0.4); }
-        .dot-orange { background-color: #ff9500; box-shadow: 0 0 8px rgba(255, 149, 0, 0.4); }
-        .chevron { color: #555; font-size: 20px; }
     </style>
 </head>
-<body>
+<body class="flex justify-center min-h-screen">
 
-    <div id="burger-menu">
-        <button class="close-btn" onclick="toggleMenu()">✕</button>
-        <h3>Proposer un site</h3>
-        <form id="propose-form" onsubmit="soumettreSite(event)">
-            <div class="form-group"><input type="text" id="site-nom" placeholder="Nom du site" required></div>
-            <div class="form-group">
-                <select id="site-cat">
-                    <option value="Films">Films</option>
-                    <option value="Animes">Animes</option>
-                    <option value="Général">Général</option>
-                </select>
+    <div class="w-full max-w-md bg-black min-h-screen pb-10 flex flex-col border-x border-gray-900 relative">
+        
+        <!-- Header -->
+        <header class="flex items-center justify-between p-6 sticky top-0 bg-black/80 backdrop-blur-md z-20 border-b border-gray-900">
+            <!-- Menu Burger (visuel) -->
+            <button class="text-gray-300 hover:text-white transition focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+            
+            <h1 class="text-xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
+                Find Stream
+            </h1>
+            
+            <!-- Bouton Ajouter (+) -->
+            <button onclick="toggleMenu()" class="text-gray-300 hover:text-white transition focus:outline-none bg-gray-900 p-2 rounded-full border border-gray-800">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+            </button>
+        </header>
+
+        <!-- Formulaire d'ajout (Caché par défaut) -->
+        <div id="burger-menu" class="hidden px-6 py-4 bg-gray-900 border-b border-gray-800 z-10">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-sm font-bold text-white">Proposer un site</h3>
+                <button onclick="toggleMenu()" class="text-gray-400 hover:text-white font-bold">✕</button>
             </div>
-            <div class="form-group"><input type="url" id="site-url" placeholder="https://..." required></div>
-            <div class="form-group"><button type="submit" id="submit-btn">Envoyer</button></div>
-            <p id="form-message" style="font-size: 13px; margin-top: 10px; font-weight: bold;"></p>
-        </form>
-    </div>
+            
+            <form id="propose-form" class="space-y-3" onsubmit="soumettreSite(event)">
+                <input type="text" id="site-nom" placeholder="Nom du site" required class="w-full bg-black border border-gray-700 rounded p-2 text-sm text-white focus:outline-none focus:border-gray-500">
+                
+                <select id="site-cat" required class="w-full bg-black border border-gray-700 rounded p-2 text-sm text-white focus:outline-none focus:border-gray-500">
+                    <option value="Films">Films & Séries</option>
+                    <option value="Animes">Animes</option>
+                </select>
+                
+                <input type="url" id="site-url" placeholder="https://..." required class="w-full bg-black border border-gray-700 rounded p-2 text-sm text-white focus:outline-none focus:border-gray-500">
+                
+                <button type="submit" id="submit-btn" class="w-full bg-white text-black font-bold py-2 rounded text-sm hover:bg-gray-200 transition">
+                    Envoyer
+                </button>
+                <p id="form-message" class="text-xs text-center font-bold mt-2"></p>
+            </form>
+        </div>
 
-    <header>
-        <button class="menu-btn" onclick="toggleMenu()">☰</button>
-        <h2 style="margin: 0; font-size: 18px;">Find Stream</h2>
-    </header>
-
-    <div class="container" id="content">
-        <p style="text-align: center; color: #888; margin-top: 50px;">Connexion à la base de données...</p>
+        <!-- Contenu principal (La liste des sites se mettra ici) -->
+        <main class="flex-1 px-6 py-4 space-y-8" id="content">
+            <p class="text-center text-gray-500 mt-10 animate-pulse">Connexion à la base de données...</p>
+        </main>
     </div>
 
     <script>
-        // 1. DÉCLARATION DE L'API (Lien vers Apps Script)
+        // L'URL de ton API Google Apps Script
         const API_URL = "https://script.google.com/macros/s/AKfycbzrY64QnGdNjv0t1LW7ZBubtlf3L8AcgdZEX-RWvlbHTQsYHu30JEcRTCuRo7lOrw0kMA/exec";
 
+        // Afficher/Cacher le formulaire d'ajout
         function toggleMenu() {
-            document.getElementById('burger-menu').classList.toggle('active');
+            document.getElementById('burger-menu').classList.toggle('hidden');
         }
 
-        // 2. TÉLÉCHARGEMENT DES DONNÉES DEPUIS GOOGLE SHEETS
+        // 1. TÉLÉCHARGEMENT DES DONNÉES (Google Sheets)
         async function chargerDonnees() {
             try {
-                // Requête GET vers Apps Script
                 const response = await fetch(API_URL);
                 const json = await response.json();
                 
                 if (json.succes && json.donnees.length > 0) {
                     afficherSites(json.donnees);
                 } else {
-                    document.getElementById('content').innerHTML = "<p style='text-align:center;'>Aucun site trouvé.</p>";
+                    document.getElementById('content').innerHTML = "<p class='text-center text-gray-500 mt-10'>Aucun site trouvé.</p>";
                 }
             } catch (erreur) {
-                document.getElementById('content').innerHTML = "<p style='text-align:center; color:#ff3b30;'>Erreur de connexion à l'API. Vérifie que le déploiement Apps Script est public.</p>";
+                document.getElementById('content').innerHTML = "<p class='text-center text-red-500 mt-10'>Erreur de connexion au serveur.</p>";
             }
         }
 
-        // 3. CONSTRUCTION VISUELLE DES CARTES
+        // 2. CONSTRUCTION VISUELLE AVEC CSS DYNAMIQUE
         function afficherSites(donnees) {
             const container = document.getElementById('content');
-            container.innerHTML = ""; 
+            container.innerHTML = ""; // On vide le message de chargement
 
-            const categories = { "Films": [], "Général": [], "Animes": [] };
+            // Les 2 catégories demandées
+            const categories = { 
+                "Films": [], 
+                "Animes": [] 
+            };
+
+            // Répartition des sites reçus
             donnees.forEach(site => {
-                if (categories[site.categorie]) categories[site.categorie].push(site);
-                else categories["Général"].push(site); 
+                const catSheet = site.categorie ? site.categorie.toLowerCase() : "";
+                if (catSheet.includes("anime")) {
+                    categories["Animes"].push(site);
+                } else {
+                    categories["Films"].push(site); // Tout le reste va dans Films & Séries
+                }
             });
 
-            for (const [cat, sites] of Object.entries(categories)) {
-                if (sites.length === 0) continue;
+            // Affichage dans l'ordre strict : Films d'abord, Animes ensuite
+            ["Films", "Animes"].forEach(catKey => {
+                const sites = categories[catKey];
                 
-                let html = `<div class="category-title">${cat}</div>`;
+                if (sites.length === 0) return; // Si la catégorie est vide, on l'ignore
                 
+                const titreAffiche = catKey === "Films" ? "Films & Séries" : "Animes";
+                
+                let sectionHTML = `
+                    <section>
+                        <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">${titreAffiche}</h2>
+                        <div class="space-y-4">
+                `;
+                
+                // Création des cartes pour chaque site
                 sites.forEach(site => {
-                    let dotClass = "dot-orange"; 
-                    if (site.statut.includes("🟢") || site.statut.includes("🔄") || site.statut.includes("🔍")) {
-                        dotClass = "dot-green";
-                    } else if (site.statut.includes("🔴")) {
-                        dotClass = "dot-red";
+                    // Analyse du statut depuis les emojis de ton Sheet
+                    let statutColor = "pending"; 
+                    let statutBrut = site.statut ? site.statut : "";
+
+                    if (statutBrut.includes("🟢") || statutBrut.includes("🔄") || statutBrut.includes("🔍")) {
+                        statutColor = "online";
+                    } else if (statutBrut.includes("🔴")) {
+                        statutColor = "offline";
                     }
                     
-                    let statutPropre = site.statut.replace(/[🟢🔴🔄🔍]/g, "").trim();
+                    const textePropre = statutBrut.replace(/[🟢🔴🔄🔍]/g, "").trim();
+
+                    // C'EST ICI QUE LA PREMIÈRE LETTRE EST EXTRAITE !
+                    const initial = site.nom ? site.nom.charAt(0).toUpperCase() : "?";
                     
-                    html += `
-                        <a href="${site.url}" target="_blank" class="site-card">
-                            <div class="site-icon"></div>
-                            <div class="site-info">
-                                <div class="site-name">${site.nom}</div>
-                                <div class="site-sub">
-                                    <span class="status-dot ${dotClass}"></span> ${statutPropre}
+                    const opacityClass = statutColor === 'offline' ? 'opacity-60' : '';
+                    const urlValide = site.url ? site.url : "#";
+
+                    sectionHTML += `
+                        <a href="${urlValide}" target="_blank" class="flex items-center justify-between group cursor-pointer ${opacityClass} hover:bg-gray-900/50 p-2 -mx-2 rounded-lg transition">
+                            <div class="flex items-center space-x-4 overflow-hidden">
+                                <!-- Le carré avec la lettre -->
+                                <div class="w-10 h-10 min-w-[40px] rounded-lg bg-gray-800 flex items-center justify-center text-lg font-bold text-gray-300 group-hover:bg-gray-700 transition">
+                                    ${initial}
+                                </div>
+                                <!-- Nom et statut -->
+                                <div class="flex flex-col truncate">
+                                    <span class="font-bold text-gray-100 group-hover:text-white transition truncate">${site.nom}</span>
+                                    <span class="text-xs text-gray-500 truncate">${textePropre || (statutColor.charAt(0).toUpperCase() + statutColor.slice(1))}</span>
                                 </div>
                             </div>
-                            <div class="chevron">›</div>
+                            <!-- Pastille de couleur (Sans Glow) et chevron -->
+                            <div class="flex items-center space-x-3 ml-2">
+                                <div class="w-3 h-3 min-w-[12px] rounded-full status-${statutColor}"></div>
+                                <span class="text-gray-600 group-hover:text-white text-xl">›</span>
+                            </div>
                         </a>
                     `;
                 });
-                container.innerHTML += html; 
-            }
+
+                sectionHTML += `</div></section>`;
+                container.innerHTML += sectionHTML; 
+            });
         }
 
-        // 4. ENVOI DU FORMULAIRE VERS GOOGLE SHEETS
+        // 3. ENVOI DU NOUVEAU SITE VERS GOOGLE SHEETS
         async function soumettreSite(event) {
             event.preventDefault(); 
             const btn = document.getElementById('submit-btn');
             const msg = document.getElementById('form-message');
-            btn.innerText = "Envoi...";
+            
+            btn.innerText = "Envoi en cours...";
             btn.disabled = true;
 
             const params = new URLSearchParams();
@@ -193,26 +210,35 @@
             params.append("url", document.getElementById('site-url').value);
 
             try {
-                // Requête POST vers Apps Script
                 const response = await fetch(API_URL, { method: 'POST', body: params });
                 const result = await response.json();
                 
-                msg.style.color = result.statut === "succes" ? "#2eeb7b" : "#ff3b30";
-                msg.innerText = result.message;
+                msg.classList.remove('text-green-500', 'text-red-500');
+                msg.classList.add(result.statut === "succes" ? "text-green-500" : "text-red-500");
+                msg.innerText = result.message || "Envoyé !";
                 
                 if (result.statut === "succes") {
                     document.getElementById('propose-form').reset();
-                    setTimeout(() => { toggleMenu(); msg.innerText = ""; }, 2000);
+                    
+                    // RECHARGE LES DONNÉES ! Le nouveau site va s'afficher tout seul avec le bon CSS et sa lettre d'icône.
+                    chargerDonnees(); 
+                    
+                    setTimeout(() => { 
+                        toggleMenu(); 
+                        msg.innerText = ""; 
+                    }, 2000);
                 }
             } catch (erreur) {
-                msg.style.color = "#ff3b30";
-                msg.innerText = "Erreur réseau. Le serveur ne répond pas.";
+                msg.classList.remove('text-green-500');
+                msg.classList.add('text-red-500');
+                msg.innerText = "Erreur réseau. Impossible d'ajouter le site.";
             } finally {
                 btn.innerText = "Envoyer";
                 btn.disabled = false;
             }
         }
 
+        // Démarrage de l'application
         chargerDonnees();
     </script>
 </body>
