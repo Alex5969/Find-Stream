@@ -3,7 +3,7 @@ import re
 import json
 
 # L'URL de ton Webhook Google Apps Script (À REMPLACER)
-WEBHOOK_URL = "https://script.google.com/macros/s/AKfy.../exec"
+WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbx7JISqpoMHCcIlUXhGIPWMdo7oGW99p6nNxkmJnKhR4wfi6HoMUND-jWA4y0EVj_RFxg/exec"
 
 def extract_urls_from_page(url):
     try:
